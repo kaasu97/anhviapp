@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  emoji        String   @default("🐣")
+  createdAt    DateTime @default(now())
+
+  coupleAsOne    Couple? @relation("CoupleUserOne")
+  coupleAsTwo    Couple? @relation("CoupleUserTwo")
+
+  writtenLetters   Letter[] @relation("LetterAuthor")
+  receivedLetters  Letter[] @relation("LetterRecipient")
+}
+
+model Couple {
+  id              String    @id @default(cuid())
+  inviteCode      String    @unique
+  startedAt       DateTime  @default(now())
+  anniversary     DateTime?
+  turnUserId      String?
+  createdAt       DateTime  @default(now())
+
+  userOneId String @unique
+  userOne   User   @relation("CoupleUserOne", fields: [userOneId], references: [id])
+
+  userTwoId String? @unique
+  userTwo   User?   @relation("CoupleUserTwo", fields: [userTwoId], references: [id])
+
+  letters Letter[]
+}
+
+enum LetterStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+model Letter {
+  id             String       @id @default(cuid())
+  coupleId       String
+  couple         Couple       @relation(fields: [coupleId], references: [id])
+
+  authorId       String
+  author         User         @relation("LetterAuthor", fields: [authorId], references: [id])
+
+  recipientId    String
+  recipient      User         @relation("LetterRecipient", fields: [recipientId], references: [id])
+
+  promptText     String
+  promptEmoji    String       @default("💌")
+  requestText    String
+
+  status         LetterStatus @default(PENDING)
+  drawnAt        DateTime     @default(now())
+  dueAt          DateTime
+  completedAt    DateTime?
+  completionNote String?
+  authorReaction String?
+
+  createdAt      DateTime     @default(now())
+
+  @@index([coupleId, drawnAt])
+  @@index([recipientId, status])
+}
