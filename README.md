@@ -18,14 +18,17 @@ hoàn thành. Mục tiêu là giữ cảm giác luôn đồng hành cùng nhau d
 ## Công nghệ
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
-- Prisma 7 (driver adapters) + SQLite (`@prisma/adapter-better-sqlite3`)
+- Prisma 7 (driver adapters) + PostgreSQL (`@prisma/adapter-pg`)
 - Xác thực bằng cookie phiên JWT (`jose`) + mật khẩu băm bằng `bcryptjs`
 
-## Bắt đầu
+## Bắt đầu (local)
+
+Cần một database Postgres đang chạy (local hoặc cloud, ví dụ tạo miễn phí
+tại [neon.tech](https://neon.tech)).
 
 ```bash
 npm install
-cp .env.example .env   # rồi thay AUTH_SECRET bằng một chuỗi ngẫu nhiên riêng
+cp .env.example .env   # điền DATABASE_URL + AUTH_SECRET của riêng bạn
 npx prisma migrate dev
 npm run dev
 ```
@@ -34,6 +37,25 @@ Mở [http://localhost:3000](http://localhost:3000).
 
 ## Biến môi trường
 
-Xem `.env.example`. Cần có `DATABASE_URL` (đường dẫn SQLite) và
-`AUTH_SECRET` (chuỗi bí mật để ký session, tạo bằng
-`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
+Xem `.env.example`. Cần có:
+
+- `DATABASE_URL` — chuỗi kết nối Postgres.
+- `AUTH_SECRET` — chuỗi bí mật để ký session, tạo bằng
+  `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+
+## Deploy lên Vercel
+
+1. Tạo một database Postgres miễn phí, ví dụ tại
+   [neon.tech](https://neon.tech) hoặc [supabase.com](https://supabase.com),
+   rồi lấy connection string của nó.
+2. Trên [vercel.com](https://vercel.com), chọn **Add New → Project** và kết
+   nối repo GitHub này.
+3. Trong phần **Environment Variables** của project, thêm:
+   - `DATABASE_URL` = connection string ở bước 1
+   - `AUTH_SECRET` = một chuỗi ngẫu nhiên riêng (xem lệnh ở trên)
+4. Bấm **Deploy**. Lệnh `npm run build` đã được cấu hình để tự chạy
+   `prisma migrate deploy` trước khi build, nên schema sẽ tự động được áp
+   dụng vào database — không cần thao tác thủ công nào thêm.
+5. Sau lần deploy đầu tiên, mỗi lần push lên nhánh chính Vercel sẽ tự động
+   build & deploy lại, và mọi migration mới (nếu có) cũng được áp dụng tự
+   động nhờ bước 4.
